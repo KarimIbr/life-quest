@@ -147,9 +147,9 @@ const Profile = () => {
               className="relative group cursor-pointer rounded-lg overflow-hidden"
               onClick={() => setShowQuickNavModal(true)}
             >
-              {userData?.quickNavImageUrl ? (
+              {userData?.quickImageUrl ? (
                 <img
-                  src={userData.quickNavImageUrl}
+                  src={userData.quickImageUrl}
                   alt="Quick Nav"
                   className="w-full h-32 object-cover"
                 />
@@ -243,9 +243,9 @@ const Profile = () => {
       )}
       {showQuickNavModal && (
         <QuickNavImage
-          currentImageUrl={userData?.quickNavImageUrl}
+          currentImageUrl={userData?.quickImageUrl}
           onImageUpdate={(url) => {
-            setUserData(prev => prev ? { ...prev, quickNavImageUrl: url } : null);
+            setUserData(prev => prev ? { ...prev, quickImageUrl: url } : null);
             setShowQuickNavModal(false);
           }}
           onClose={() => setShowQuickNavModal(false)}

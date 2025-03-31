@@ -67,21 +67,6 @@ const Quests = () => {
     }
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy':
-        return 'text-green-400';
-      case 'medium':
-        return 'text-yellow-400';
-      case 'hard':
-        return 'text-orange-400';
-      case 'epic':
-        return 'text-red-400';
-      default:
-        return 'text-gray-400';
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">

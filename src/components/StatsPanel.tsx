@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import type { User, UserStats, CustomStat } from '../types';

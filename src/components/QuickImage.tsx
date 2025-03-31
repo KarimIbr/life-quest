@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { auth, db } from '../config/firebase';
 
 interface QuickImageProps {
   currentImageUrl?: string;

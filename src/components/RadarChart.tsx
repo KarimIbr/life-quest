@@ -1,58 +1,131 @@
-import { User } from '../types';
+import { Radar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import type { User, UserStats } from '../types';
+
+// Register ChartJS components
+ChartJS.register(
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend
+);
 
 interface RadarChartProps {
-  stats: User;
+  userStats: User;
 }
 
-export const RadarChart = ({ stats }: RadarChartProps) => {
+type StatKey = keyof UserStats;
+
+export const RadarChart = ({ userStats }: RadarChartProps) => {
   const mainStats = [
-    { key: 'Physical', icon: '💪' },
-    { key: 'Mental', icon: '🧠' },
-    { key: 'Creativity', icon: '🎨' },
-    { key: 'Spiritual', icon: '✨' },
-    { key: 'Social', icon: '🤝' },
-    { key: 'Knowledge', icon: '📚' },
+    { key: 'physical' as StatKey, icon: '💪' },
+    { key: 'mental' as StatKey, icon: '🧠' },
+    { key: 'creativity' as StatKey, icon: '🎨' },
+    { key: 'spiritual' as StatKey, icon: '✨' },
+    { key: 'social' as StatKey, icon: '👥' },
+    { key: 'knowledge' as StatKey, icon: '📚' },
   ];
 
-  // Calculate the maximum value for scaling
-  const maxValue = Math.max(...mainStats.map(stat => stats[stat.key as keyof User] as number));
+  const calculateTotalStats = (baseStats: UserStats, customStats?: Array<{ parentStat: string; value: number; boostRatio?: number }>) => {
+    const totalStats = { ...baseStats };
+    
+    if (!customStats) return totalStats;
+
+    customStats.forEach(substat => {
+      const parentStat = substat.parentStat.toLowerCase() as keyof UserStats;
+      if (parentStat in totalStats) {
+        const boostValue = substat.value * (substat.boostRatio || 1);
+        totalStats[parentStat] += boostValue;
+      }
+    });
+
+    // Cap stats at 100
+    Object.keys(totalStats).forEach(key => {
+      totalStats[key as keyof UserStats] = Math.min(totalStats[key as keyof UserStats], 100);
+    });
+
+    return totalStats;
+  };
+
+  const totalStats = calculateTotalStats(userStats.stats, userStats.customStats);
+
+  const chartData = {
+    labels: mainStats.map(stat => `${stat.icon} ${stat.key.charAt(0).toUpperCase() + stat.key.slice(1)}`),
+    datasets: [
+      {
+        label: 'Stats',
+        data: mainStats.map(stat => totalStats[stat.key]),
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 2,
+        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: 'rgba(54, 162, 235, 1)',
+        pointRadius: 4,
+      },
+    ],
+  };
+
+  const options = {
+    scales: {
+      r: {
+        angleLines: {
+          color: 'rgba(255, 255, 255, 0.1)',
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)',
+        },
+        pointLabels: {
+          color: 'rgba(255, 255, 255, 0.9)',
+          font: {
+            size: 14,
+          },
+        },
+        ticks: {
+          stepSize: 10,
+          backdropColor: 'transparent',
+          color: 'rgba(255, 255, 255, 0.6)',
+        },
+        beginAtZero: true,
+        min: 0,
+        max: 100,
+      },
+    },
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: 'rgba(255, 255, 255, 1)',
+        bodyColor: 'rgba(255, 255, 255, 1)',
+        padding: 12,
+        displayColors: false,
+      },
+    },
+    elements: {
+      line: {
+        borderWidth: 2,
+      },
+    },
+    maintainAspectRatio: false,
+  };
 
   return (
-    <div className="relative w-full aspect-square max-w-md mx-auto">
-      {/* Hexagon background */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-full h-full border-2 border-gray-700 rounded-lg transform rotate-45"></div>
-      </div>
-
-      {/* Stats */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-full h-full p-4">
-          {mainStats.map((stat, index) => {
-            const value = stats[stat.key as keyof User] as number;
-            const angle = (index * 60) - 90; // Start from top (-90 degrees)
-            const radius = 40; // Percentage from center
-
-            // Calculate position
-            const x = 50 + radius * Math.cos(angle * Math.PI / 180);
-            const y = 50 + radius * Math.sin(angle * Math.PI / 180);
-
-            return (
-              <div
-                key={stat.key}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2"
-                style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                }}
-              >
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl mb-1">{stat.icon}</span>
-                  <span className="text-sm text-gray-300">{value}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+    <div className="w-full max-w-2xl mx-auto bg-[#1E2024] p-6 rounded-xl">
+      <div className="h-[500px] flex items-center justify-center">
+        <Radar data={chartData} options={options} />
       </div>
     </div>
   );

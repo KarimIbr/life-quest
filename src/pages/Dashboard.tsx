@@ -1,40 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
-import { Radar } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  RadialLinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip,
-  Legend
-} from 'chart.js';
-import type { User, CustomStat, UserStats } from '../types';
-import AvatarUpload from '../components/AvatarUpload';
-import StatsPanel from '../components/StatsPanel';
-import AddSubstatModal from '../components/AddSubstatModal';
-import QuestCreation from '../components/QuestCreation';
-import useQuests from '../hooks/useQuests';
-import QuickImage from '../components/QuickImage';
+import type { User, Quest } from '../types';
+import { useQuests } from '../hooks/useQuests';
 import RandomQuests from '../components/RandomQuests';
+import QuestCreation from '../components/QuestCreation';
+import StatsPanel from '../components/StatsPanel';
+import AvatarUpload from '../components/AvatarUpload';
+import AddSubstatModal from '../components/AddSubstatModal';
+import QuickImage from '../components/QuickImage';
+import { RadarChart } from '../components/RadarChart';
 
-// Register ChartJS components
-ChartJS.register(
-  RadialLinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip,
-  Legend
-);
+const getQuestTypeColor = (type: string) => {
+  switch (type) {
+    case 'daily':
+      return 'text-blue-400';
+    case 'weekly':
+      return 'text-purple-400';
+    case 'achievement':
+      return 'text-yellow-400';
+    default:
+      return 'text-gray-400';
+  }
+};
 
 const Dashboard = () => {
   const [user] = useAuthState(auth);
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showAddSubstatModal, setShowAddSubstatModal] = useState(false);
   const [showQuestCreation, setShowQuestCreation] = useState(false);
@@ -42,9 +37,6 @@ const Dashboard = () => {
   const [showHeaderImageModal, setShowHeaderImageModal] = useState(false);
 
   const { 
-    quests,
-    loading: questsLoading,
-    error: questsError,
     completeQuest,
     getDailyQuests,
     getWeeklyQuests,
@@ -54,87 +46,15 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user) return;
-      
+
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists()) {
-          const data = userDoc.data();
-          // Ensure all required fields exist
-          const userData: User = {
-            id: user.uid,
-            uid: user.uid,
-            email: user.email || '',
-            displayName: user.displayName || '',
-            avatarUrl: data.avatarUrl || '',
-            bannerUrl: data.bannerUrl || '',
-            topImageUrl: data.topImageUrl || '',
-            sideImageUrl: data.sideImageUrl || '',
-            quickImageUrl: data.quickImageUrl || '',
-            headerImageUrl: data.headerImageUrl || '',
-            showAddSubstatModal: data.showAddSubstatModal || false,
-            stats: data.stats || {
-              physical: 0,
-              mental: 0,
-              creativity: 0,
-              spiritual: 0,
-              social: 0,
-              knowledge: 0
-            },
-            customStats: data.customStats || [],
-            activeQuests: data.activeQuests || [],
-            experience: data.experience || 0,
-            level: data.level || 1,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            hp: data.hp || 100,
-            energy: data.energy || 100,
-            themeColor: data.themeColor || '',
-            borderColor: data.borderColor || '',
-            showBorders: data.showBorders || false
-          };
-          setUserData(userData);
-        } else {
-          // Create new user document if it doesn't exist
-          const newUserData: User = {
-            id: user.uid,
-            uid: user.uid,
-            email: user.email || '',
-            displayName: user.displayName || '',
-            avatarUrl: '',
-            bannerUrl: '',
-            topImageUrl: '',
-            sideImageUrl: '',
-            quickImageUrl: '',
-            headerImageUrl: '',
-            showAddSubstatModal: false,
-            stats: {
-              physical: 0,
-              mental: 0,
-              creativity: 0,
-              spiritual: 0,
-              social: 0,
-              knowledge: 0
-            },
-            customStats: [],
-            activeQuests: [],
-            experience: 0,
-            level: 1,
-            createdAt: new Date(),
-            hp: 100,
-            energy: 100,
-            themeColor: '',
-            borderColor: '',
-            showBorders: false
-          };
-          // Convert User object to plain object for Firestore
-          const firestoreData = {
-            ...newUserData,
-            createdAt: new Date()
-          };
-          await updateDoc(doc(db, 'users', user.uid), firestoreData);
-          setUserData(newUserData);
+          setUserData(userDoc.data() as User);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
+        setError('Failed to load user data');
       } finally {
         setLoading(false);
       }
@@ -143,153 +63,32 @@ const Dashboard = () => {
     fetchUserData();
   }, [user]);
 
-  const calculateTotalStats = (baseStats: UserStats, customStats?: CustomStat[]) => {
-    const totalStats = { ...baseStats };
-    
-    if (!customStats) return totalStats;
+  const handleCompleteQuest = async (questId: string) => {
+    if (!user) return;
 
-    customStats.forEach(substat => {
-      const parentStat = substat.parentStat.toLowerCase() as keyof UserStats;
-      if (parentStat in totalStats) {
-        const boostValue = substat.value * (substat.boostRatio || 1);
-        totalStats[parentStat] += boostValue;
+    try {
+      await completeQuest(questId);
+      // Refresh user data after completing quest
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        setUserData(userDoc.data() as User);
       }
-    });
-
-    // Cap stats at 100
-    Object.keys(totalStats).forEach(key => {
-      totalStats[key as keyof UserStats] = Math.min(totalStats[key as keyof UserStats], 100);
-    });
-
-    return totalStats;
-  };
-
-  const statsData = {
-    labels: ['Physical', 'Mental', 'Creativity', 'Spiritual', 'Social', 'Knowledge'],
-    datasets: [
-      {
-        label: 'Current Stats',
-        data: userData ? (() => {
-          const totalStats = calculateTotalStats(userData.stats, userData.customStats);
-          return [
-            totalStats.physical,
-            totalStats.mental,
-            totalStats.creativity,
-            totalStats.spiritual,
-            totalStats.social,
-            totalStats.knowledge,
-          ];
-        })() : [],
-        backgroundColor: 'rgba(74, 222, 128, 0.1)',
-        borderColor: 'rgba(74, 222, 128, 0.5)',
-        borderWidth: 1,
-        pointBackgroundColor: '#4ADE80',
-        pointBorderColor: '#4ADE80',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: '#4ADE80',
-        pointRadius: 4,
-        fill: true,
-      },
-    ],
-  };
-
-  const options = {
-    scales: {
-      r: {
-        beginAtZero: true,
-        min: 0,
-        max: 100,
-        angleLines: {
-          color: 'rgba(255, 255, 255, 0.05)',
-          lineWidth: 1,
-        },
-        grid: {
-          color: 'rgba(255, 255, 255, 0.05)',
-          circular: true,
-        },
-        pointLabels: {
-          color: 'rgb(156, 163, 175)',
-          font: {
-            size: 16,
-            family: "'Inter var', sans-serif",
-            weight: 'normal'
-          },
-          padding: 20
-        },
-        ticks: {
-          display: false,
-          stepSize: 20,
-        },
-      }
-    },
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        enabled: true,
-        backgroundColor: 'rgb(17, 24, 39)',
-        titleFont: {
-          size: 14,
-          family: "'Inter var', sans-serif",
-        },
-        bodyFont: {
-          size: 12,
-          family: "'Inter var', sans-serif",
-        },
-        padding: 12,
-        cornerRadius: 8,
-      },
-    },
-    elements: {
-      line: {
-        tension: 0.2
-      }
-    },
-    layout: {
-      padding: 20
+    } catch (error) {
+      console.error('Error completing quest:', error);
+      setError('Failed to complete quest');
     }
-  } as const;
-
-  const handleAddSubstat = (newStat: CustomStat) => {
-    setUserData(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        customStats: [...(prev.customStats || []), newStat]
-      };
-    });
   };
 
-  const handleQuickImageUpdate = async (url: string) => {
-    if (!user) return;
-    await updateDoc(doc(db, 'users', user.uid), {
-      quickImageUrl: url
-    });
-    setUserData(prev => prev ? { ...prev, quickImageUrl: url } : null);
-    setShowQuickImageModal(false);
-  };
+  if (loading) {
+    return <div className="text-gray-400">Loading...</div>;
+  }
 
-  const handleHeaderImageUpdate = async (url: string) => {
-    if (!user) return;
-    await updateDoc(doc(db, 'users', user.uid), {
-      headerImageUrl: url
-    });
-    setUserData(prev => prev ? { ...prev, headerImageUrl: url } : null);
-    setShowHeaderImageModal(false);
-  };
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
 
-  const handleUserUpdate = (updates: Partial<User>) => {
-    if (!userData) return;
-    setUserData({ ...userData, ...updates });
-  };
-
-  if (loading || !userData) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+  if (!userData) {
+    return <div className="text-gray-400">No user data found</div>;
   }
 
   return (
@@ -457,7 +256,7 @@ const Dashboard = () => {
           <div className="card bg-[#1E2024] border border-gray-800 mb-6">
             <h2 className="text-2xl font-semibold text-gray-100 mb-8">Stats Overview</h2>
             <div className="aspect-square max-w-2xl mx-auto p-4">
-              <Radar data={statsData} options={options} />
+              <RadarChart userStats={userData} />
             </div>
           </div>
 
@@ -466,37 +265,38 @@ const Dashboard = () => {
             {/* Daily Quests */}
             <div className="bg-surface p-6 rounded-xl">
               <h2 className="text-xl font-semibold text-gray-100 mb-4">Daily Quests</h2>
-              {questsLoading ? (
-                <div className="text-gray-400">Loading quests...</div>
-              ) : questsError ? (
-                <div className="text-red-500">{questsError}</div>
-              ) : getDailyQuests().length === 0 ? (
+              {getDailyQuests().length === 0 ? (
                 <div className="text-gray-400">No daily quests available</div>
               ) : (
                 <div className="space-y-4">
-                  {getDailyQuests().map((quest) => (
+                  {getDailyQuests().map((quest: Quest) => (
                     <div key={quest.id} className="bg-surface-light p-4 rounded-lg">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="text-lg font-medium text-gray-100">{quest.title}</h3>
-                          <p className="text-gray-400 text-sm mt-1">{quest.description}</p>
-                          <div className="flex gap-4 mt-2">
-                            <div className="text-primary text-sm">+{quest.rewards.experience} XP</div>
-                            <div className="text-gray-400 text-sm">
-                              {Object.entries(quest.rewards.stats).map(([stat, value]) => (
-                                <span key={stat} className="mr-2">
-                                  +{value} {stat}
-                                </span>
-                              ))}
-                            </div>
+                          <h3 className="font-medium text-gray-100">{quest.title}</h3>
+                          <p className="text-sm text-gray-400">{quest.description}</p>
+                          <div className="flex gap-2 mt-2">
+                            <span className={`text-xs ${getQuestTypeColor(quest.type)}`}>
+                              {quest.type}
+                            </span>
+                            <span className="text-xs text-primary">
+                              +{quest.rewards.experience} XP
+                            </span>
+                            {Object.entries(quest.rewards.stats).map(([stat, value]) => (
+                              <span key={stat} className="text-xs text-gray-400">
+                                +{value} {stat}
+                              </span>
+                            ))}
                           </div>
                         </div>
-                        <button 
-                          onClick={() => quest.id && completeQuest(quest.id)}
-                          className="btn-primary text-sm"
-                        >
-                          Complete
-                        </button>
+                        {!quest.completed && (
+                          <button
+                            onClick={() => handleCompleteQuest(quest.id)}
+                            className="btn-primary"
+                          >
+                            Complete
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -507,37 +307,38 @@ const Dashboard = () => {
             {/* Weekly Quests */}
             <div className="bg-surface p-6 rounded-xl">
               <h2 className="text-xl font-semibold text-gray-100 mb-4">Weekly Quests</h2>
-              {questsLoading ? (
-                <div className="text-gray-400">Loading quests...</div>
-              ) : questsError ? (
-                <div className="text-red-500">{questsError}</div>
-              ) : getWeeklyQuests().length === 0 ? (
+              {getWeeklyQuests().length === 0 ? (
                 <div className="text-gray-400">No weekly quests available</div>
               ) : (
                 <div className="space-y-4">
-                  {getWeeklyQuests().map((quest) => (
+                  {getWeeklyQuests().map((quest: Quest) => (
                     <div key={quest.id} className="bg-surface-light p-4 rounded-lg">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="text-lg font-medium text-gray-100">{quest.title}</h3>
-                          <p className="text-gray-400 text-sm mt-1">{quest.description}</p>
-                          <div className="flex gap-4 mt-2">
-                            <div className="text-primary text-sm">+{quest.rewards.experience} XP</div>
-                            <div className="text-gray-400 text-sm">
-                              {Object.entries(quest.rewards.stats).map(([stat, value]) => (
-                                <span key={stat} className="mr-2">
-                                  +{value} {stat}
-                                </span>
-                              ))}
-                            </div>
+                          <h3 className="font-medium text-gray-100">{quest.title}</h3>
+                          <p className="text-sm text-gray-400">{quest.description}</p>
+                          <div className="flex gap-2 mt-2">
+                            <span className={`text-xs ${getQuestTypeColor(quest.type)}`}>
+                              {quest.type}
+                            </span>
+                            <span className="text-xs text-primary">
+                              +{quest.rewards.experience} XP
+                            </span>
+                            {Object.entries(quest.rewards.stats).map(([stat, value]) => (
+                              <span key={stat} className="text-xs text-gray-400">
+                                +{value} {stat}
+                              </span>
+                            ))}
                           </div>
                         </div>
-                        <button 
-                          onClick={() => quest.id && completeQuest(quest.id)}
-                          className="btn-primary text-sm"
-                        >
-                          Complete
-                        </button>
+                        {!quest.completed && (
+                          <button
+                            onClick={() => handleCompleteQuest(quest.id)}
+                            className="btn-primary"
+                          >
+                            Complete
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -548,35 +349,34 @@ const Dashboard = () => {
             {/* Achievements */}
             <div className="bg-surface p-6 rounded-xl">
               <h2 className="text-xl font-semibold text-gray-100 mb-4">Achievements</h2>
-              {questsLoading ? (
-                <div className="text-gray-400">Loading achievements...</div>
-              ) : questsError ? (
-                <div className="text-red-500">{questsError}</div>
-              ) : getAchievementQuests().length === 0 ? (
+              {getAchievementQuests().length === 0 ? (
                 <div className="text-gray-400">No achievements available</div>
               ) : (
                 <div className="space-y-4">
-                  {getAchievementQuests().map((quest) => (
+                  {getAchievementQuests().map((quest: Quest) => (
                     <div key={quest.id} className="bg-surface-light p-4 rounded-lg">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="text-lg font-medium text-gray-100">{quest.title}</h3>
-                          <p className="text-gray-400 text-sm mt-1">{quest.description}</p>
-                          <div className="flex gap-4 mt-2">
-                            <div className="text-primary text-sm">+{quest.rewards.experience} XP</div>
-                            <div className="text-gray-400 text-sm">
-                              {Object.entries(quest.rewards.stats).map(([stat, value]) => (
-                                <span key={stat} className="mr-2">
-                                  +{value} {stat}
-                                </span>
-                              ))}
-                            </div>
+                          <h3 className="font-medium text-gray-100">{quest.title}</h3>
+                          <p className="text-sm text-gray-400">{quest.description}</p>
+                          <div className="flex gap-2 mt-2">
+                            <span className={`text-xs ${getQuestTypeColor(quest.type)}`}>
+                              {quest.type}
+                            </span>
+                            <span className="text-xs text-primary">
+                              +{quest.rewards.experience} XP
+                            </span>
+                            {Object.entries(quest.rewards.stats).map(([stat, value]) => (
+                              <span key={stat} className="text-xs text-gray-400">
+                                +{value} {stat}
+                              </span>
+                            ))}
                           </div>
                         </div>
                         {!quest.completed && (
-                          <button 
-                            onClick={() => quest.id && completeQuest(quest.id)}
-                            className="btn-primary text-sm"
+                          <button
+                            onClick={() => handleCompleteQuest(quest.id)}
+                            className="btn-primary"
                           >
                             Complete
                           </button>
@@ -604,8 +404,18 @@ const Dashboard = () => {
       )}
       {showAddSubstatModal && (
         <AddSubstatModal
-          onAdd={handleAddSubstat}
           onClose={() => setShowAddSubstatModal(false)}
+          onAdd={() => {
+            setShowAddSubstatModal(false);
+            // Refresh user data after adding substat
+            if (user) {
+              getDoc(doc(db, 'users', user.uid)).then(userDoc => {
+                if (userDoc.exists()) {
+                  setUserData(userDoc.data() as User);
+                }
+              });
+            }
+          }}
         />
       )}
       {showQuestCreation && (
@@ -617,14 +427,20 @@ const Dashboard = () => {
       {showQuickImageModal && (
         <QuickImage
           currentImageUrl={userData?.quickImageUrl}
-          onImageUpdate={handleQuickImageUpdate}
+          onImageUpdate={(url) => {
+            setUserData(prev => prev ? { ...prev, quickImageUrl: url } : null);
+            setShowQuickImageModal(false);
+          }}
           onClose={() => setShowQuickImageModal(false)}
         />
       )}
       {showHeaderImageModal && (
         <QuickImage
           currentImageUrl={userData?.headerImageUrl}
-          onImageUpdate={handleHeaderImageUpdate}
+          onImageUpdate={(url) => {
+            setUserData(prev => prev ? { ...prev, headerImageUrl: url } : null);
+            setShowHeaderImageModal(false);
+          }}
           onClose={() => setShowHeaderImageModal(false)}
         />
       )}

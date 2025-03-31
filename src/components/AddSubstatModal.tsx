@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { doc, updateDoc, getDoc, increment, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, arrayUnion } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import type { CustomStat, UserStats } from '../types';
 

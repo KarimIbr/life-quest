@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, Timestamp, increment, getDoc, FieldValue } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
-import type { Quest, UserStats, CustomStat } from '../types';
+import type { Quest, CustomStat } from '../types';
 
 export const useQuests = () => {
   const [quests, setQuests] = useState<Quest[]>([]);

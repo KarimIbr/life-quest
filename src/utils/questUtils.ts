@@ -64,6 +64,97 @@ export const completeQuest = async (quest: Quest, userId: string) => {
 };
 
 export const createDailyQuests = async (userId: string) => {
-  // Implementation for creating daily quests
-  // This would randomly select from questTemplates and create new quests for the user
+  try {
+    const dailyQuests = generateDailyQuests(userId);
+    // Here you would typically save these quests to the database
+    // For now, we'll just return them
+    return dailyQuests;
+  } catch (error) {
+    console.error('Error creating daily quests:', error);
+    throw error;
+  }
+};
+
+export const generateDailyQuests = (userId: string): Quest[] => {
+  return [
+    {
+      id: 'daily-1',
+      userId,
+      title: 'Morning Exercise',
+      description: 'Start your day with a 15-minute workout',
+      type: 'daily',
+      difficulty: 'easy',
+      completed: false,
+      createdAt: new Date(),
+      experience: 50,
+      statBoosts: {
+        strength: 2,
+        vitality: 1
+      },
+      rewards: {
+        experience: 50,
+        stats: {
+          strength: 2,
+          vitality: 1
+        }
+      }
+    },
+    // ... rest of the daily quests ...
+  ];
+};
+
+export const generateWeeklyQuests = (userId: string): Quest[] => {
+  return [
+    {
+      id: 'weekly-1',
+      userId,
+      title: 'Weekly Challenge',
+      description: 'Complete a challenging task this week',
+      type: 'weekly',
+      difficulty: 'medium',
+      completed: false,
+      createdAt: new Date(),
+      experience: 200,
+      statBoosts: {
+        strength: 5,
+        vitality: 3
+      },
+      rewards: {
+        experience: 200,
+        stats: {
+          strength: 5,
+          vitality: 3
+        }
+      }
+    },
+    // ... rest of the weekly quests ...
+  ];
+};
+
+export const generateAchievementQuests = (userId: string): Quest[] => {
+  return [
+    {
+      id: 'achievement-1',
+      userId,
+      title: 'First Achievement',
+      description: 'Complete your first quest',
+      type: 'achievement',
+      difficulty: 'easy',
+      completed: false,
+      createdAt: new Date(),
+      experience: 100,
+      statBoosts: {
+        strength: 3,
+        vitality: 2
+      },
+      rewards: {
+        experience: 100,
+        stats: {
+          strength: 3,
+          vitality: 2
+        }
+      }
+    },
+    // ... rest of the achievement quests ...
+  ];
 }; 
