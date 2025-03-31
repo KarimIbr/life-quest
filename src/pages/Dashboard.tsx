@@ -48,8 +48,7 @@ const Dashboard = () => {
     completeQuest,
     getDailyQuests,
     getWeeklyQuests,
-    getHabits,
-    getAchievements
+    getAchievementQuests
   } = useQuests();
 
   useEffect(() => {
@@ -388,7 +387,8 @@ const Dashboard = () => {
 
           {/* Random Quests */}
           <div className="card">
-            <RandomQuests user={userData} onUpdate={handleUserUpdate} />
+            <h3 className="text-lg font-semibold text-gray-100 mb-4">Random Quests</h3>
+            <RandomQuests user={userData} />
           </div>
         </div>
 
@@ -481,9 +481,9 @@ const Dashboard = () => {
                           <h3 className="text-lg font-medium text-gray-100">{quest.title}</h3>
                           <p className="text-gray-400 text-sm mt-1">{quest.description}</p>
                           <div className="flex gap-4 mt-2">
-                            <div className="text-primary text-sm">+{quest.experience} XP</div>
+                            <div className="text-primary text-sm">+{quest.rewards.experience} XP</div>
                             <div className="text-gray-400 text-sm">
-                              {Object.entries(quest.statBoosts).map(([stat, value]) => (
+                              {Object.entries(quest.rewards.stats).map(([stat, value]) => (
                                 <span key={stat} className="mr-2">
                                   +{value} {stat}
                                 </span>
@@ -522,50 +522,9 @@ const Dashboard = () => {
                           <h3 className="text-lg font-medium text-gray-100">{quest.title}</h3>
                           <p className="text-gray-400 text-sm mt-1">{quest.description}</p>
                           <div className="flex gap-4 mt-2">
-                            <div className="text-primary text-sm">+{quest.experience} XP</div>
+                            <div className="text-primary text-sm">+{quest.rewards.experience} XP</div>
                             <div className="text-gray-400 text-sm">
-                              {Object.entries(quest.statBoosts).map(([stat, value]) => (
-                                <span key={stat} className="mr-2">
-                                  +{value} {stat}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => quest.id && completeQuest(quest.id)}
-                          className="btn-primary text-sm"
-                        >
-                          Complete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Habits */}
-            <div className="bg-surface p-6 rounded-xl">
-              <h2 className="text-xl font-semibold text-gray-100 mb-4">Habits</h2>
-              {questsLoading ? (
-                <div className="text-gray-400">Loading habits...</div>
-              ) : questsError ? (
-                <div className="text-red-500">{questsError}</div>
-              ) : getHabits().length === 0 ? (
-                <div className="text-gray-400">No habits available</div>
-              ) : (
-                <div className="space-y-4">
-                  {getHabits().map((quest) => (
-                    <div key={quest.id} className="bg-surface-light p-4 rounded-lg">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-100">{quest.title}</h3>
-                          <p className="text-gray-400 text-sm mt-1">{quest.description}</p>
-                          <div className="flex gap-4 mt-2">
-                            <div className="text-primary text-sm">+{quest.experience} XP</div>
-                            <div className="text-gray-400 text-sm">
-                              {Object.entries(quest.statBoosts).map(([stat, value]) => (
+                              {Object.entries(quest.rewards.stats).map(([stat, value]) => (
                                 <span key={stat} className="mr-2">
                                   +{value} {stat}
                                 </span>
@@ -593,20 +552,20 @@ const Dashboard = () => {
                 <div className="text-gray-400">Loading achievements...</div>
               ) : questsError ? (
                 <div className="text-red-500">{questsError}</div>
-              ) : getAchievements().length === 0 ? (
+              ) : getAchievementQuests().length === 0 ? (
                 <div className="text-gray-400">No achievements available</div>
               ) : (
                 <div className="space-y-4">
-                  {getAchievements().map((quest) => (
+                  {getAchievementQuests().map((quest) => (
                     <div key={quest.id} className="bg-surface-light p-4 rounded-lg">
                       <div className="flex justify-between items-start">
                         <div>
                           <h3 className="text-lg font-medium text-gray-100">{quest.title}</h3>
                           <p className="text-gray-400 text-sm mt-1">{quest.description}</p>
                           <div className="flex gap-4 mt-2">
-                            <div className="text-primary text-sm">+{quest.experience} XP</div>
+                            <div className="text-primary text-sm">+{quest.rewards.experience} XP</div>
                             <div className="text-gray-400 text-sm">
-                              {Object.entries(quest.statBoosts).map(([stat, value]) => (
+                              {Object.entries(quest.rewards.stats).map(([stat, value]) => (
                                 <span key={stat} className="mr-2">
                                   +{value} {stat}
                                 </span>

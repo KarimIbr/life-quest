@@ -17,14 +17,14 @@ export const completeQuest = async (quest: Quest, userId: string) => {
     
     // Calculate new stats and experience
     const newStats = { ...userData.stats };
-    Object.entries(quest.statBoosts).forEach(([stat, boost]) => {
+    Object.entries(quest.rewards.stats).forEach(([stat, boost]) => {
       newStats[stat as keyof typeof newStats] = Math.min(
         100,
         newStats[stat as keyof typeof newStats] + boost
       );
     });
 
-    const newExperience = userData.experience + quest.experience;
+    const newExperience = userData.experience + quest.rewards.experience;
     let newLevel = userData.level;
     const experienceNeeded = userData.level * 1000;
 
@@ -51,7 +51,7 @@ export const completeQuest = async (quest: Quest, userId: string) => {
       leveledUp: newLevel > userData.level,
       newLevel,
       newExperience: newExperience % experienceNeeded,
-      statIncreases: Object.entries(quest.statBoosts).map(([stat, boost]) => ({
+      statIncreases: Object.entries(quest.rewards.stats).map(([stat, boost]) => ({
         stat,
         boost,
         newValue: newStats[stat as keyof typeof newStats]

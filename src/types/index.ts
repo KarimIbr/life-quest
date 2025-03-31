@@ -48,11 +48,14 @@ export interface Quest {
   userId: string;
   title: string;
   description: string;
-  type: 'daily' | 'weekly' | 'achievement';
-  difficulty: 'easy' | 'medium' | 'hard' | 'epic';
+  type: QuestType;
+  difficulty: QuestDifficulty;
   completed: boolean;
   createdAt: Date;
   completedAt?: Date;
+  experience: number;
+  statBoosts: Record<string, number>;
+  substatBoosts?: Record<string, number>;
   rewards: {
     experience: number;
     stats: Record<string, number>;

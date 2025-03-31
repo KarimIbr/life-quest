@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { User, ActiveBasicQuest, BasicQuest } from '../types';
+import { User, ActiveBasicQuest } from '../types';
 import { basicQuests } from '../data/basicQuests';
 import { formatDistanceToNow } from 'date-fns';
 
 interface RandomQuestsProps {
   user: User | null;
-  onUpdate: (updates: Partial<User>) => void;
 }
 
-const RandomQuests = ({ user, onUpdate }: RandomQuestsProps) => {
+const RandomQuests = ({ user }: RandomQuestsProps) => {
   const [activeQuests, setActiveQuests] = useState<ActiveBasicQuest[]>([]);
   const [loading, setLoading] = useState(false);
 

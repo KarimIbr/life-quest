@@ -68,14 +68,14 @@ export const useQuests = () => {
 
       // Calculate main stat updates
       const mainStatUpdates: Record<string, FieldValue> = {};
-      Object.entries(quest.statBoosts).forEach(([stat, boost]) => {
+      Object.entries(quest.rewards.stats).forEach(([stat, boost]) => {
         mainStatUpdates[`stats.${stat}`] = increment(boost);
       });
 
       // Calculate substat updates and their contributions to main stats
-      if (Object.keys(quest.substatBoosts).length > 0 && userData.customStats) {
+      if (quest.substatBoosts && Object.keys(quest.substatBoosts || {}).length > 0 && userData.customStats) {
         const updatedCustomStats = userData.customStats.map((stat: CustomStat) => {
-          const boost = quest.substatBoosts[stat.name] || 0;
+          const boost = quest.substatBoosts?.[stat.name] || 0;
           if (boost > 0) {
             // Add the boost to the substat value
             const newValue = Math.min(100, stat.value + boost);
@@ -102,13 +102,13 @@ export const useQuests = () => {
         await updateDoc(userRef, {
           customStats: updatedCustomStats,
           ...mainStatUpdates,
-          experience: increment(quest.experience)
+          experience: increment(quest.rewards.experience)
         });
       } else {
         // Only update main stats and experience
         await updateDoc(userRef, {
           ...mainStatUpdates,
-          experience: increment(quest.experience)
+          experience: increment(quest.rewards.experience)
         });
       }
 
@@ -120,9 +120,7 @@ export const useQuests = () => {
 
   const getDailyQuests = () => quests.filter(q => q.type === 'daily' && !q.completed);
   const getWeeklyQuests = () => quests.filter(q => q.type === 'weekly' && !q.completed);
-  const getAchievements = () => quests.filter(q => q.type === 'achievement');
-  const getHabits = () => quests.filter(q => q.type === 'habit' && !q.completed);
-  const getCompletedQuests = () => quests.filter(q => q.completed);
+  const getAchievementQuests = () => quests.filter(q => q.type === 'achievement' && !q.completed);
 
   return {
     quests,
@@ -131,9 +129,7 @@ export const useQuests = () => {
     completeQuest,
     getDailyQuests,
     getWeeklyQuests,
-    getAchievements,
-    getHabits,
-    getCompletedQuests
+    getAchievementQuests
   };
 };
 

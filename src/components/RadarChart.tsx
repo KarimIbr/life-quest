@@ -29,7 +29,6 @@ export const RadarChart = ({ stats }: RadarChartProps) => {
         <div className="w-full h-full p-4">
           {mainStats.map((stat, index) => {
             const value = stats[stat.key as keyof User] as number;
-            const percentage = (value / maxValue) * 100;
             const angle = (index * 60) - 90; // Start from top (-90 degrees)
             const radius = 40; // Percentage from center
 

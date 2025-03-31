@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
 interface QuickNavImageProps {

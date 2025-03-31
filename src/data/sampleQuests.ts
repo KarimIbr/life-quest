@@ -6,7 +6,11 @@ interface QuestTemplate {
   type: QuestType;
   difficulty: QuestDifficulty;
   experience: number;
-  statBoosts: Quest['statBoosts'];
+  statBoosts: Record<string, number>;
+  rewards: {
+    experience: number;
+    stats: Record<string, number>;
+  };
 }
 
 export const questTemplates: QuestTemplate[] = [
@@ -20,6 +24,13 @@ export const questTemplates: QuestTemplate[] = [
     statBoosts: {
       physical: 5,
       mental: 2
+    },
+    rewards: {
+      experience: 100,
+      stats: {
+        physical: 5,
+        mental: 2
+      }
     }
   },
   {
@@ -31,6 +42,13 @@ export const questTemplates: QuestTemplate[] = [
     statBoosts: {
       physical: 4,
       mental: 1
+    },
+    rewards: {
+      experience: 150,
+      stats: {
+        physical: 4,
+        mental: 1
+      }
     }
   },
 
@@ -44,6 +62,13 @@ export const questTemplates: QuestTemplate[] = [
     statBoosts: {
       mental: 5,
       knowledge: 4
+    },
+    rewards: {
+      experience: 120,
+      stats: {
+        mental: 5,
+        knowledge: 4
+      }
     }
   },
   {
@@ -55,6 +80,13 @@ export const questTemplates: QuestTemplate[] = [
     statBoosts: {
       mental: 3,
       spiritual: 4
+    },
+    rewards: {
+      experience: 80,
+      stats: {
+        mental: 3,
+        spiritual: 4
+      }
     }
   },
 
@@ -68,6 +100,13 @@ export const questTemplates: QuestTemplate[] = [
     statBoosts: {
       social: 4,
       mental: 2
+    },
+    rewards: {
+      experience: 100,
+      stats: {
+        social: 4,
+        mental: 2
+      }
     }
   },
   {
@@ -80,6 +119,14 @@ export const questTemplates: QuestTemplate[] = [
       social: 6,
       physical: 2,
       mental: 2
+    },
+    rewards: {
+      experience: 200,
+      stats: {
+        social: 6,
+        physical: 2,
+        mental: 2
+      }
     }
   },
 
@@ -93,6 +140,13 @@ export const questTemplates: QuestTemplate[] = [
     statBoosts: {
       creativity: 4,
       mental: 2
+    },
+    rewards: {
+      experience: 100,
+      stats: {
+        creativity: 4,
+        mental: 2
+      }
     }
   },
   {
@@ -105,6 +159,14 @@ export const questTemplates: QuestTemplate[] = [
       creativity: 5,
       knowledge: 4,
       mental: 3
+    },
+    rewards: {
+      experience: 250,
+      stats: {
+        creativity: 5,
+        knowledge: 4,
+        mental: 3
+      }
     }
   },
 
@@ -118,6 +180,13 @@ export const questTemplates: QuestTemplate[] = [
     statBoosts: {
       knowledge: 4,
       mental: 2
+    },
+    rewards: {
+      experience: 100,
+      stats: {
+        knowledge: 4,
+        mental: 2
+      }
     }
   },
   {
@@ -130,6 +199,14 @@ export const questTemplates: QuestTemplate[] = [
       knowledge: 5,
       mental: 3,
       creativity: 2
+    },
+    rewards: {
+      experience: 200,
+      stats: {
+        knowledge: 5,
+        mental: 3,
+        creativity: 2
+      }
     }
   },
 
@@ -143,6 +220,13 @@ export const questTemplates: QuestTemplate[] = [
     statBoosts: {
       spiritual: 4,
       mental: 2
+    },
+    rewards: {
+      experience: 100,
+      stats: {
+        spiritual: 4,
+        mental: 2
+      }
     }
   },
   {
@@ -155,6 +239,14 @@ export const questTemplates: QuestTemplate[] = [
       spiritual: 5,
       physical: 2,
       mental: 3
+    },
+    rewards: {
+      experience: 180,
+      stats: {
+        spiritual: 5,
+        physical: 2,
+        mental: 3
+      }
     }
   }
 ];

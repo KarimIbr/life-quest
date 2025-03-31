@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { doc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
-import type { UserStats, CustomStat } from '../types';
+import type { CustomStat } from '../types';
 
 interface QuestCreationProps {
   onClose: () => void;

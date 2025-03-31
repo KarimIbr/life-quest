@@ -9,8 +9,6 @@ interface StatsPanelProps {
 }
 
 const StatsPanel = ({ user, onUpdate }: StatsPanelProps) => {
-  const [loading, setLoading] = useState(false);
-
   const calculateTotalStats = (baseStats: UserStats, customStats?: CustomStat[]) => {
     const totalStats = { ...baseStats };
     
@@ -30,23 +28,6 @@ const StatsPanel = ({ user, onUpdate }: StatsPanelProps) => {
     });
 
     return totalStats;
-  };
-
-  const handleStatUpdate = async (stat: keyof UserStats, value: number) => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      const newStats = { ...user.stats, [stat]: value };
-      await updateDoc(doc(db, 'users', user.uid), {
-        stats: newStats
-      });
-      onUpdate({ stats: newStats });
-    } catch (error) {
-      console.error('Error updating stat:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleDeleteSubstat = async (substatToDelete: CustomStat) => {
