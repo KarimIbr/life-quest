@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import type { User, Quest } from '../types';
 import { useQuests } from '../hooks/useQuests';
@@ -76,6 +76,32 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error completing quest:', error);
       setError('Failed to complete quest');
+    }
+  };
+
+  const handleQuickImageUpdate = async (url: string) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        quickImageUrl: url
+      });
+      setUserData(prev => prev ? { ...prev, quickImageUrl: url } : null);
+      setShowQuickImageModal(false);
+    } catch (error) {
+      console.error('Error updating quick image:', error);
+    }
+  };
+
+  const handleHeaderImageUpdate = async (url: string) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        headerImageUrl: url
+      });
+      setUserData(prev => prev ? { ...prev, headerImageUrl: url } : null);
+      setShowHeaderImageModal(false);
+    } catch (error) {
+      console.error('Error updating header image:', error);
     }
   };
 
@@ -279,10 +305,12 @@ const Dashboard = () => {
                             <span className={`text-xs ${getQuestTypeColor(quest.type)}`}>
                               {quest.type}
                             </span>
-                            <span className="text-xs text-primary">
-                              +{quest.rewards.experience} XP
-                            </span>
-                            {Object.entries(quest.rewards.stats).map(([stat, value]) => (
+                            {quest.rewards?.experience && (
+                              <span className="text-xs text-primary">
+                                +{quest.rewards.experience} XP
+                              </span>
+                            )}
+                            {quest.rewards?.stats && Object.entries(quest.rewards.stats).map(([stat, value]) => (
                               <span key={stat} className="text-xs text-gray-400">
                                 +{value} {stat}
                               </span>
@@ -321,10 +349,12 @@ const Dashboard = () => {
                             <span className={`text-xs ${getQuestTypeColor(quest.type)}`}>
                               {quest.type}
                             </span>
-                            <span className="text-xs text-primary">
-                              +{quest.rewards.experience} XP
-                            </span>
-                            {Object.entries(quest.rewards.stats).map(([stat, value]) => (
+                            {quest.rewards?.experience && (
+                              <span className="text-xs text-primary">
+                                +{quest.rewards.experience} XP
+                              </span>
+                            )}
+                            {quest.rewards?.stats && Object.entries(quest.rewards.stats).map(([stat, value]) => (
                               <span key={stat} className="text-xs text-gray-400">
                                 +{value} {stat}
                               </span>
@@ -363,10 +393,12 @@ const Dashboard = () => {
                             <span className={`text-xs ${getQuestTypeColor(quest.type)}`}>
                               {quest.type}
                             </span>
-                            <span className="text-xs text-primary">
-                              +{quest.rewards.experience} XP
-                            </span>
-                            {Object.entries(quest.rewards.stats).map(([stat, value]) => (
+                            {quest.rewards?.experience && (
+                              <span className="text-xs text-primary">
+                                +{quest.rewards.experience} XP
+                              </span>
+                            )}
+                            {quest.rewards?.stats && Object.entries(quest.rewards.stats).map(([stat, value]) => (
                               <span key={stat} className="text-xs text-gray-400">
                                 +{value} {stat}
                               </span>
@@ -427,20 +459,14 @@ const Dashboard = () => {
       {showQuickImageModal && (
         <QuickImage
           currentImageUrl={userData?.quickImageUrl}
-          onImageUpdate={(url) => {
-            setUserData(prev => prev ? { ...prev, quickImageUrl: url } : null);
-            setShowQuickImageModal(false);
-          }}
+          onImageUpdate={handleQuickImageUpdate}
           onClose={() => setShowQuickImageModal(false)}
         />
       )}
       {showHeaderImageModal && (
         <QuickImage
           currentImageUrl={userData?.headerImageUrl}
-          onImageUpdate={(url) => {
-            setUserData(prev => prev ? { ...prev, headerImageUrl: url } : null);
-            setShowHeaderImageModal(false);
-          }}
+          onImageUpdate={handleHeaderImageUpdate}
           onClose={() => setShowHeaderImageModal(false)}
         />
       )}

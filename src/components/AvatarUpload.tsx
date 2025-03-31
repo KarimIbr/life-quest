@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import { convertToDirectImageUrl, validateImage } from '../utils/imageUtils';
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string;
@@ -28,20 +29,21 @@ export const AvatarUpload = ({ currentAvatarUrl, onAvatarUpdate, onClose }: Avat
     setError(null);
 
     try {
-      // Validate the URL is an image
-      const response = await fetch(imageUrl);
-      const contentType = response.headers.get('content-type');
+      // Convert to direct URL first
+      const directUrl = convertToDirectImageUrl(imageUrl.trim());
       
-      if (!contentType?.startsWith('image/')) {
+      // Validate using Image loading
+      const isValid = await validateImage(directUrl);
+      if (!isValid) {
         throw new Error('Please provide a valid image URL');
       }
 
       // Update user document
       await updateDoc(doc(db, 'users', auth.currentUser.uid), {
-        avatarUrl: imageUrl
+        avatarUrl: directUrl
       });
 
-      onAvatarUpdate(imageUrl);
+      onAvatarUpdate(directUrl);
       onClose();
     } catch (err) {
       console.error('Error setting avatar:', err);

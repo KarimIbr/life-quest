@@ -62,18 +62,23 @@ export const QuestCreation = ({ onClose, customStats }: QuestCreationProps) => {
     if (!auth.currentUser) return;
 
     try {
+      const experience = DIFFICULTY_LEVELS.find(d => d.value === difficulty)?.xp || 50;
       const questData = {
         title: title.trim(),
         description: description.trim(),
         difficulty,
         type,
-        experience: DIFFICULTY_LEVELS.find(d => d.value === difficulty)?.xp || 50,
+        experience,
         statBoosts: selectedStats,
         substatBoosts: selectedSubstats,
         userId: auth.currentUser.uid,
         completed: false,
         createdAt: serverTimestamp(),
         completedAt: null,
+        rewards: {
+          experience,
+          stats: selectedStats
+        }
       };
 
       await addDoc(collection(db, 'quests'), questData);

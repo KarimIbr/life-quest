@@ -94,14 +94,18 @@ const Quests = () => {
                   </div>
                   <p className="text-gray-400 text-sm mt-1">{quest.description}</p>
                   <div className="flex gap-4 mt-2">
-                    <div className="text-primary text-sm">+{quest.rewards.experience} XP</div>
-                    <div className="text-gray-400 text-sm">
-                      {Object.entries(quest.rewards.stats).map(([stat, value]) => (
-                        <span key={stat} className="mr-2">
-                          +{value} {stat}
-                        </span>
-                      ))}
-                    </div>
+                    {quest.rewards?.experience && (
+                      <div className="text-primary text-sm">+{quest.rewards.experience} XP</div>
+                    )}
+                    {quest.rewards?.stats && (
+                      <div className="text-gray-400 text-sm">
+                        {Object.entries(quest.rewards.stats).map(([stat, value]) => (
+                          <span key={stat} className="mr-2">
+                            +{value} {stat}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 {!quest.completed && (

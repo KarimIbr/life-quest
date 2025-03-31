@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
-import type { User } from '../types';
+import type { User, CustomStat } from '../types';
 import ThemeSettings from '../components/ThemeSettings';
 import AvatarUpload from '../components/AvatarUpload';
 import BannerUpload from '../components/BannerUpload';
 import QuickNavImage from '../components/QuickNavImage';
+import AddSubstatModal from '../components/AddSubstatModal';
 
 const Profile = () => {
   const [user] = useAuthState(auth);
@@ -16,6 +17,7 @@ const Profile = () => {
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [showQuickNavModal, setShowQuickNavModal] = useState(false);
+  const [showAddSubstatModal, setShowAddSubstatModal] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -36,6 +38,19 @@ const Profile = () => {
     fetchUserData();
   }, [user]);
 
+  const handleAddSubstat = (newStat: CustomStat) => {
+    if (userData) {
+      setUserData({
+        ...userData,
+        customStats: [...(userData.customStats || []), newStat],
+        stats: {
+          ...userData.stats,
+          [newStat.parentStat]: Math.min(100, (userData.stats[newStat.parentStat.toLowerCase() as keyof typeof userData.stats] || 0) + (newStat.value * (newStat.boostRatio || 1)))
+        }
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -45,14 +60,14 @@ const Profile = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto p-4 space-y-6">
       {/* Profile Header */}
-      <div className="card">
-        <div className="flex items-start gap-6">
+      <div className="card p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
           {/* Avatar */}
           <div className="relative group">
             <div 
-              className="w-32 h-32 rounded-lg overflow-hidden bg-surface-light cursor-pointer"
+              className="w-24 sm:w-32 h-24 sm:h-32 rounded-lg overflow-hidden bg-surface-light cursor-pointer"
               onClick={() => setShowAvatarModal(true)}
             >
               {userData?.avatarUrl ? (
@@ -75,17 +90,17 @@ const Profile = () => {
           </div>
 
           {/* User Info */}
-          <div className="flex-1">
+          <div className="flex-1 text-center sm:text-left">
             <h1 className="text-2xl font-bold text-gray-100 mb-2">
               {userData?.displayName}
             </h1>
-            <div className="flex items-center gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4 mb-4">
               <div className="flex items-center gap-2">
                 <span className="text-gray-400">Level</span>
                 <span className="text-primary font-bold">{userData?.level}</span>
               </div>
-              <div className="flex items-center gap-2 flex-1">
-                <div className="h-2 bg-surface-light rounded-full flex-1">
+              <div className="flex items-center gap-2 flex-1 w-full sm:w-auto">
+                <div className="h-2 bg-surface-light rounded-full flex-1 min-w-[200px]">
                   <div 
                     className="h-full bg-primary rounded-full"
                     style={{
@@ -93,12 +108,12 @@ const Profile = () => {
                     }}
                   />
                 </div>
-                <span className="text-gray-400 text-sm">
+                <span className="text-gray-400 text-sm whitespace-nowrap">
                   {userData?.experience}/{(userData?.level || 1) * 1000} XP
                 </span>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-center sm:justify-start">
               <button 
                 onClick={() => setShowThemeModal(true)}
                 className="btn-secondary"
@@ -111,9 +126,9 @@ const Profile = () => {
       </div>
 
       {/* Profile Images Section */}
-      <div className="card">
+      <div className="card p-4 sm:p-6">
         <h2 className="text-xl font-semibold text-gray-100 mb-6">Profile Images</h2>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* Banner Image */}
           <div>
             <h3 className="text-lg font-medium text-gray-300 mb-4">Banner Image</h3>
@@ -169,9 +184,18 @@ const Profile = () => {
       </div>
 
       {/* Stats Management */}
-      <div className="card">
-        <h2 className="text-xl font-semibold text-gray-100 mb-6">Stats Management</h2>
-        <div className="grid grid-cols-2 gap-6">
+      <div className="card p-4 sm:p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-100">Stats Management</h2>
+          <button
+            onClick={() => setShowAddSubstatModal(true)}
+            className="btn-primary flex items-center gap-2 text-sm"
+          >
+            <span>+</span>
+            <span>Add Substat</span>
+          </button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* Main Stats */}
           <div>
             <h3 className="text-lg font-medium text-gray-300 mb-4">Main Stats</h3>
@@ -180,7 +204,7 @@ const Profile = () => {
                 <div key={stat} className="space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-300 capitalize">{stat}</span>
-                    <span className="text-primary">{value}</span>
+                    <span className="text-primary">{Math.floor(value)}</span>
                   </div>
                   <div className="h-2 bg-surface-light rounded-full">
                     <div 
@@ -198,20 +222,18 @@ const Profile = () => {
             <h3 className="text-lg font-medium text-gray-300 mb-4">Custom Stats</h3>
             <div className="space-y-4">
               {userData?.customStats?.map((stat, index) => (
-                <div key={index} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-300">{stat.name}</span>
-                    <span className="text-primary">{stat.value}</span>
+                <div key={index} className="flex items-center justify-between text-sm group">
+                  <div className="flex items-center gap-2">
+                    <span>{stat.icon}</span>
+                    <span className="text-gray-400">{stat.name}</span>
+                    <span className="text-xs text-gray-500">({(stat.boostRatio || 1) * 100}%)</span>
                   </div>
-                  <div className="h-2 bg-surface-light rounded-full">
-                    <div 
-                      className="h-full bg-primary rounded-full"
-                      style={{ width: `${stat.value}%` }}
-                    />
-                  </div>
+                  <span className="text-gray-400">+{stat.value}</span>
                 </div>
               ))}
-              <button className="btn-secondary w-full">Add Custom Stat</button>
+              {(!userData?.customStats || userData.customStats.length === 0) && (
+                <div className="text-gray-400 text-sm">No custom stats added yet</div>
+              )}
             </div>
           </div>
         </div>
@@ -222,33 +244,51 @@ const Profile = () => {
         <AvatarUpload
           currentAvatarUrl={userData?.avatarUrl}
           onAvatarUpdate={(url) => {
-            setUserData(prev => prev ? { ...prev, avatarUrl: url } : null);
+            if (userData) {
+              setUserData({ ...userData, avatarUrl: url });
+            }
             setShowAvatarModal(false);
           }}
           onClose={() => setShowAvatarModal(false)}
         />
       )}
+
       {showThemeModal && (
-        <ThemeSettings onClose={() => setShowThemeModal(false)} />
+        <ThemeSettings
+          onClose={() => setShowThemeModal(false)}
+        />
       )}
+
       {showBannerModal && (
         <BannerUpload
           currentBannerUrl={userData?.bannerUrl}
           onBannerUpdate={(url) => {
-            setUserData(prev => prev ? { ...prev, bannerUrl: url } : null);
+            if (userData) {
+              setUserData({ ...userData, bannerUrl: url });
+            }
             setShowBannerModal(false);
           }}
           onClose={() => setShowBannerModal(false)}
         />
       )}
+
       {showQuickNavModal && (
         <QuickNavImage
           currentImageUrl={userData?.quickImageUrl}
           onImageUpdate={(url) => {
-            setUserData(prev => prev ? { ...prev, quickImageUrl: url } : null);
+            if (userData) {
+              setUserData({ ...userData, quickImageUrl: url });
+            }
             setShowQuickNavModal(false);
           }}
           onClose={() => setShowQuickNavModal(false)}
+        />
+      )}
+
+      {showAddSubstatModal && (
+        <AddSubstatModal
+          onClose={() => setShowAddSubstatModal(false)}
+          onAdd={handleAddSubstat}
         />
       )}
     </div>

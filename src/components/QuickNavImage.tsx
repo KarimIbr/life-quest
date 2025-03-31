@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { convertToDirectImageUrl, validateImage } from '../utils/imageUtils';
 
 interface QuickNavImageProps {
   currentImageUrl?: string;
@@ -9,43 +10,6 @@ interface QuickNavImageProps {
 const QuickNavImage = ({ currentImageUrl, onImageUpdate, onClose }: QuickNavImageProps) => {
   const [imageUrl, setImageUrl] = useState(currentImageUrl || '');
   const [error, setError] = useState<string | null>(null);
-
-  const convertToDirectImageUrl = (url: string): string => {
-    try {
-      // Handle Imgur URLs
-      if (url.includes('imgur.com')) {
-        // Remove any file extension from the URL first
-        url = url.replace(/\.[^/.]+$/, '');
-        
-        // Extract the ID from various Imgur URL formats
-        let id;
-        if (url.includes('/a/') || url.includes('/gallery/')) {
-          // Handle album/gallery URLs
-          id = url.split('/').pop();
-        } else {
-          // Handle direct image URLs
-          id = url.split('/').pop();
-        }
-        
-        if (id) {
-          return `https://i.imgur.com/${id}.jpg`;
-        }
-      }
-      return url;
-    } catch (error) {
-      console.error('Error converting URL:', error);
-      return url;
-    }
-  };
-
-  const validateImage = (url: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
-      img.src = url;
-    });
-  };
 
   const handleUrlSubmit = async () => {
     try {
